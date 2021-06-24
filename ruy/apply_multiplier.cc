@@ -90,7 +90,7 @@ std::int32_t MultiplyByQuantizedMultiplier(
     static bool show_data_bool = getenv("TF_SHOW_DATA") != 0;
     auto show_data = [&](const char *when) {
     printf("Data %s\n",when);
-    printf("x = %f\n",x);
+    printf("x = %d\n",x);
     return 0;
     };
 
@@ -107,8 +107,8 @@ std::int32_t MultiplyByQuantizedMultiplier(
 			if (show_data_bool) show_data("before scaling {");
 
 			SLL acc = SLL(x);    // Assumed to be an integer already.
-			acc *= shift;
-			x = double(LL_ROUND(acc,shift));
+			acc *= unsigned(shift);
+			x = double(LL_ROUND(acc,unsigned(shift)));
 
 			if (show_data_bool) show_data("after scaling }");
 
