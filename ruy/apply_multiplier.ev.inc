@@ -53,6 +53,7 @@ engages this alternative rounding.
 typedef double Scale_type;
 #include <stdlib.h>
 #include <cmath>
+#include <cstring>
 
 static void normalize_fractional(Scale_type F, unsigned &mpy, unsigned &shift) {
     // Adapted from python code in evgencnn.
@@ -94,9 +95,9 @@ static void normalize_fractional(Scale_type F, unsigned &mpy, unsigned &shift) {
     }
 
 
-void Multiply_better(
+std::int32_t Multiply_better(
     std::int32_t x, std::int32_t mul, int shift,
-    const std::string &name, const Scale_type scale)
+    const Scale_type scale)
     {
     enum Rmode { R_double_round, R_ev_round };
     auto tell = []() {
@@ -110,7 +111,7 @@ void Multiply_better(
     static bool show_data_bool = getenv("TF_SHOW_DATA") != 0;
     auto show_data = [&](const char *when) {
     printf("Data %s\n",when);
-    printf("%4d = %f\n",i,x);
+    printf("x = %f\n",x);
     return 0;
     };
     switch(QR) {
@@ -125,8 +126,8 @@ void Multiply_better(
         // Produces 15-bit mantissa and an exponent.  The mantissa is
         // thus less precise than that of a 32-bit floating-point number.
         normalize_fractional(scale,mpy,shift);
-        printf("    Layer %s: round mode %d by %18.15f = mpy %d shift %d\n",
-        name.c_str(),QR,scale,mpy,shift);
+        printf("    Layer: round mode %d by %18.15f = mpy %d shift %d\n",
+        QR,scale,mpy,shift);
         typedef signed long long SLL;
         if (show_data_bool) show_data("before scaling {");
 
@@ -142,4 +143,4 @@ void Multiply_better(
     }
 
 #define MultiplyByQuantizedMultiplier(A,B,C) \
-    Multiply_better(A,B,C,this->layer_param_.name(), out_scal)
+    Multiply_better(A,B,C, out_scal)
