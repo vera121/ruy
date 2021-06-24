@@ -94,9 +94,13 @@ std::int32_t MultiplyByQuantizedMultiplier(
     return 0;
     };
 
+    if (show_data_bool) printf("mul=%d, shift=%d\n");
+
     switch(QR) {
         case R_double_round: {
+        	if (show_data_bool) show_data("before scaling {");
         	TFMultiplyByQuantizedMultiplier(x, mul, shift);
+        	if (show_data_bool) show_data("after scaling }");
         	} break;
 		case R_ev_round: {
 			#define LLSHL1(x) (1LL<<(x))
