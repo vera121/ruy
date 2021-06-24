@@ -53,7 +53,8 @@ engages this alternative rounding.
 typedef double Scale_type;
 #include <stdlib.h>
 #include <cmath>
-#include <cstring>
+#include <stdint.h>
+#include <string.h>
 
 static void normalize_fractional(Scale_type F, unsigned &mpy, unsigned &shift) {
     // Adapted from python code in evgencnn.
