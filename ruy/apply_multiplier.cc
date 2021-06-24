@@ -70,8 +70,6 @@ std::int32_t TFMultiplyByQuantizedMultiplier(std::int32_t x,
 
 // <----SNPS EV rounding
 typedef double Scale_type;
-#include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 
 std::int32_t MultiplyByQuantizedMultiplier(
@@ -99,7 +97,7 @@ std::int32_t MultiplyByQuantizedMultiplier(
     switch(QR) {
         case R_double_round: {
         	if (show_data_bool) show_data("before scaling {");
-        	TFMultiplyByQuantizedMultiplier(x, mul, shift);
+        	x = TFMultiplyByQuantizedMultiplier(x, mul, shift);
         	if (show_data_bool) show_data("after scaling }");
         	} break;
 		case R_ev_round: {
@@ -115,10 +113,9 @@ std::int32_t MultiplyByQuantizedMultiplier(
 			x = double(LL_ROUND(acc,unsigned(shift)));
 
 			if (show_data_bool) show_data("after scaling }");
-
-			return x;
 			} break;
     }
+	return x;
 }
 // SNPS EV rounding--->
 
