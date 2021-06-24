@@ -45,6 +45,8 @@ namespace detail {
 // Preconditions:
 // - quantized_multiplier >= 0
 // - shift is -31 to +7 (negative for right shift)
+
+// EV CUSTOMIZATION: add "TF" prefix
 std::int32_t TFMultiplyByQuantizedMultiplier(std::int32_t x,
                                            std::int32_t quantized_multiplier,
                                            int shift) {
@@ -65,7 +67,56 @@ std::int32_t TFMultiplyByQuantizedMultiplier(std::int32_t x,
   return static_cast<std::int32_t>(result);
 }
 
-#include "apply_multiplier.ev.inc"
+
+// <----SNPS EV rounding
+typedef double Scale_type;
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+
+std::int32_t MultiplyByQuantizedMultiplier(
+    std::int32_t x, std::int32_t mul, int shift)
+{
+    enum Rmode { R_double_round, R_ev_round };
+    auto tell = []() {
+    const char* QR = getenv("TF_QUANTIZED_ROUND");
+    if (QR == 0) return R_double_round;
+    return
+        strcmp(QR,"EV")==0?R_ev_round:
+        (printf("Unrecognized rounding mode %s\n",QR), R_double_round);
+    };
+    static const Rmode QR = tell();
+
+    static bool show_data_bool = getenv("TF_SHOW_DATA") != 0;
+    auto show_data = [&](const char *when) {
+    printf("Data %s\n",when);
+    printf("x = %f\n",x);
+    return 0;
+    };
+
+    switch(QR) {
+        case R_double_round: {
+        	TFMultiplyByQuantizedMultiplier(x, mul, shift);
+        	} break;
+		case R_ev_round: {
+			#define LLSHL1(x) (1LL<<(x))
+			#define LL_ROUND(X,shift) /* (unbiased) round-to-even */ \
+			((X + ((X >> (shift)) & 1) + (LLSHL1(shift-1)-1)) >> (shift))
+
+			typedef signed long long SLL;
+			if (show_data_bool) show_data("before scaling {");
+
+			SLL acc = SLL(x);    // Assumed to be an integer already.
+			acc *= shift;
+			x = double(LL_ROUND(acc,shift));
+
+			if (show_data_bool) show_data("after scaling }");
+
+			return x;
+			} break;
+    }
+}
+// SNPS EV rounding--->
 
 }  // namespace detail
 
