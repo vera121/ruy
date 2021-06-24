@@ -56,49 +56,9 @@ typedef double Scale_type;
 #include <stdint.h>
 #include <string.h>
 
-static void normalize_fractional(Scale_type F, unsigned &mpy, unsigned &shift) {
-    // Adapted from python code in evgencnn.
-    int frac_bits = 16;
-    Scale_type hi = 0.5;
-    int nudge_power = frac_bits;
-    // Due to symmetric rounding, >= 32767.5 rounds to 32768, which is invalid
-    // as a 16-bit signed number.
-    // So the high value should be shifted by 32767.49/32768 so rounding
-    // will produce at most 32767.  Nudge avoids that.
-    unsigned two_to_nudge = 1<<nudge_power;
-    hi *= (Scale_type(two_to_nudge)-0.51)/two_to_nudge;
-    Scale_type lo = hi/2;
-    int frac_adjust_shift = 0;
-    F = fabs(F);
-    Scale_type oldF = F;
-    while (F >= hi) {
-    frac_adjust_shift -= 1; F /= 2;
-    }
-    while (F < lo) {
-    frac_adjust_shift += 1; F *= 2;
-    }
-
-    int max_shift = 63;
-    while (frac_bits + frac_adjust_shift > max_shift) {
-    frac_adjust_shift--;
-    }
-    int total_shift = frac_bits + frac_adjust_shift;
-    0 && printf("F=%f fas=%d\n",F,frac_adjust_shift);
-    0 && printf("newF=%f\n",oldF*(1<<total_shift));
-    mpy = std::round(oldF * (1<<frac_bits) * (1<<frac_adjust_shift));
-    // Now if mpy is even, divide by 2 and reduce the shift.
-    shift = frac_bits + frac_adjust_shift;
-    const int MINSHIFT = 1;  // Not knowing whether HW likes shift of 0, we make min 1.
-    while ((mpy & 1) == 0 && shift > MINSHIFT) {
-        // The end result is an odd fractional.
-        mpy >>= 1; shift -= 1;
-    }
-    }
-
 
 std::int32_t Multiply_better(
-    std::int32_t x, std::int32_t mul, int shift,
-    const Scale_type scale)
+    std::int32_t x, std::int32_t mul, int shift)
     {
     enum Rmode { R_double_round, R_ev_round };
     auto tell = []() {
@@ -109,12 +69,14 @@ std::int32_t Multiply_better(
         (printf("Unrecognized rounding mode %s\n",QR), R_double_round);
     };
     static const Rmode QR = tell();
+
     static bool show_data_bool = getenv("TF_SHOW_DATA") != 0;
     auto show_data = [&](const char *when) {
     printf("Data %s\n",when);
     printf("x = %f\n",x);
     return 0;
     };
+
     switch(QR) {
         case R_double_round: {
         MultiplyByQuantizedMultiplier(x, mul, shift);
@@ -123,17 +85,12 @@ std::int32_t Multiply_better(
         #define LLSHL1(x) (1LL<<(x))
         #define LL_ROUND(X,shift) /* (unbiased) round-to-even */ \
         ((X + ((X >> (shift)) & 1) + (LLSHL1(shift-1)-1)) >> (shift))
-        unsigned mpy,shift;
-        // Produces 15-bit mantissa and an exponent.  The mantissa is
-        // thus less precise than that of a 32-bit floating-point number.
-        normalize_fractional(scale,mpy,shift);
-        printf("    Layer: round mode %d by %18.15f = mpy %d shift %d\n",
-        QR,scale,mpy,shift);
+
         typedef signed long long SLL;
         if (show_data_bool) show_data("before scaling {");
 
         SLL acc = SLL(x);    // Assumed to be an integer already.
-        acc *= mpy;
+        acc *= shift;
         x = double(LL_ROUND(acc,shift));
 
         if (show_data_bool) show_data("after scaling }");
@@ -141,7 +98,7 @@ std::int32_t Multiply_better(
         return x;
         } break;
     }
-    }
+}
 
 #define MultiplyByQuantizedMultiplier(A,B,C) \
-    Multiply_better(A,B,C, out_scal)
+    Multiply_better(A,B,C)
