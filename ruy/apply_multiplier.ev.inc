@@ -49,17 +49,15 @@ engages this alternative rounding.
  */
 
 
-
 typedef double Scale_type;
 #include <stdlib.h>
 #include <cmath>
 #include <stdint.h>
 #include <string.h>
 
-
-std::int32_t Multiply_better(
+std::int32_t MultiplyByQuantizedMultiplier(
     std::int32_t x, std::int32_t mul, int shift)
-    {
+{
     enum Rmode { R_double_round, R_ev_round };
     auto tell = []() {
     const char* QR = getenv("TF_QUANTIZED_ROUND");
@@ -79,26 +77,24 @@ std::int32_t Multiply_better(
 
     switch(QR) {
         case R_double_round: {
-        MultiplyByQuantizedMultiplier(x, mul, shift);
-        } break;
-    case R_ev_round: {
-        #define LLSHL1(x) (1LL<<(x))
-        #define LL_ROUND(X,shift) /* (unbiased) round-to-even */ \
-        ((X + ((X >> (shift)) & 1) + (LLSHL1(shift-1)-1)) >> (shift))
+        	TFMultiplyByQuantizedMultiplier(x, mul, shift);
+        	} break;
+		case R_ev_round: {
+			#define LLSHL1(x) (1LL<<(x))
+			#define LL_ROUND(X,shift) /* (unbiased) round-to-even */ \
+			((X + ((X >> (shift)) & 1) + (LLSHL1(shift-1)-1)) >> (shift))
 
-        typedef signed long long SLL;
-        if (show_data_bool) show_data("before scaling {");
+			typedef signed long long SLL;
+			if (show_data_bool) show_data("before scaling {");
 
-        SLL acc = SLL(x);    // Assumed to be an integer already.
-        acc *= shift;
-        x = double(LL_ROUND(acc,shift));
+			SLL acc = SLL(x);    // Assumed to be an integer already.
+			acc *= shift;
+			x = double(LL_ROUND(acc,shift));
 
-        if (show_data_bool) show_data("after scaling }");
+			if (show_data_bool) show_data("after scaling }");
 
-        return x;
-        } break;
+			return x;
+			} break;
     }
 }
 
-#define MultiplyByQuantizedMultiplier(A,B,C) \
-    Multiply_better(A,B,C)

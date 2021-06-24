@@ -23,8 +23,6 @@ limitations under the License.
 namespace ruy {
 namespace detail {
 
-#include "apply_multiplier.ev.inc"
-
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // Warning: this code is not meant to be bit-exact-normative.
 // Please refer to the class comment of ruy::MulParams, in mul_params.h.
@@ -47,7 +45,7 @@ namespace detail {
 // Preconditions:
 // - quantized_multiplier >= 0
 // - shift is -31 to +7 (negative for right shift)
-std::int32_t MultiplyByQuantizedMultiplier(std::int32_t x,
+std::int32_t TFMultiplyByQuantizedMultiplier(std::int32_t x,
                                            std::int32_t quantized_multiplier,
                                            int shift) {
   RUY_CHECK_GE(shift, -31);
@@ -66,6 +64,8 @@ std::int32_t MultiplyByQuantizedMultiplier(std::int32_t x,
 
   return static_cast<std::int32_t>(result);
 }
+
+#include "apply_multiplier.ev.inc"
 
 }  // namespace detail
 
