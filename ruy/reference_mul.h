@@ -29,6 +29,7 @@ template <typename LhsScalar, typename RhsScalar, typename AccumScalar,
 void ReferenceMul(const Matrix<LhsScalar>& lhs, const Matrix<RhsScalar>& rhs,
                   const MulParams<AccumScalar, DstScalar>& mul_params,
                   Matrix<DstScalar>* dst) {
+   printf("ruy run ReferenceMul ApplyMultiplier\n");
   for (int i = 0; i < lhs.layout().rows(); i++) {
     for (int j = 0; j < rhs.layout().cols(); j++) {
       AccumScalar accum = 0;
