@@ -107,8 +107,8 @@ std::int32_t MultiplyByQuantizedMultiplier(
 			typedef signed long long SLL;
 
 			SLL acc = SLL(x);    // Assumed to be an integer already.
-			acc *= unsigned(shift);
-			x = double(LL_ROUND(acc,unsigned(shift)));
+			acc *= unsigned(mul);
+			x = double(LL_ROUND(acc, unsigned(shift)));
 			} break;
     }
 
