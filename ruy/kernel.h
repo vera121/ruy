@@ -208,6 +208,7 @@ struct Kernel {
     RUY_DCHECK_LE(end_col - clamped_end_col, RhsLayout::kCols);
     profiler::ScopeLabel label("Kernel (Standard Cpp)");
     const int depth = lhs.layout.rows;
+    printf("ruy run kernel ApplyMultiplier\n")
     for (int i = start_row; i < clamped_end_row; i++) {
       for (int j = start_col; j < clamped_end_col; j++) {
         AccumScalar accum = 0;

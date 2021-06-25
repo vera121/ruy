@@ -83,6 +83,7 @@ std::int32_t MultiplyByQuantizedMultiplier(
         strcmp(QR,"EV")==0?R_ev_round:
         (printf("Unrecognized rounding mode %s\n",QR), R_double_round);
     };
+
     static const Rmode QR = tell();
 
     static bool show_data_bool = getenv("TF_SHOW_DATA") != 0;
@@ -93,28 +94,25 @@ std::int32_t MultiplyByQuantizedMultiplier(
     };
 
     if (show_data_bool) printf("mul=%d, shift=%d\n");
+    if (show_data_bool) show_data("before scaling {");
 
     switch(QR) {
         case R_double_round: {
-        	if (show_data_bool) show_data("before scaling {");
         	x = TFMultiplyByQuantizedMultiplier(x, mul, shift);
-        	if (show_data_bool) show_data("after scaling }");
         	} break;
 		case R_ev_round: {
 			#define LLSHL1(x) (1LL<<(x))
 			#define LL_ROUND(X,shift) /* (unbiased) round-to-even */ \
 			((X + ((X >> (shift)) & 1) + (LLSHL1(shift-1)-1)) >> (shift))
-
 			typedef signed long long SLL;
-			if (show_data_bool) show_data("before scaling {");
 
 			SLL acc = SLL(x);    // Assumed to be an integer already.
 			acc *= unsigned(shift);
 			x = double(LL_ROUND(acc,unsigned(shift)));
-
-			if (show_data_bool) show_data("after scaling }");
 			} break;
     }
+
+	if (show_data_bool) show_data("after scaling }");
 	return x;
 }
 // SNPS EV rounding--->
