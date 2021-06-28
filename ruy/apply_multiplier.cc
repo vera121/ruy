@@ -93,7 +93,7 @@ std::int32_t MultiplyByQuantizedMultiplier(
     return 0;
     };
 
-    if (show_data_bool) printf("mul=%d, shift=%d\n");
+    if (show_data_bool) printf("mul=%d, shift=%d\n", mul, shift);
     if (show_data_bool) show_data("before scaling {");
 
     switch(QR) {
